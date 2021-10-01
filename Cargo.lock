@@ -100,6 +100,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3ee2393c4a91429dffb4bedf19f4d6abf27d8a732c8ce4980305d782e5426d57"
 
 [[package]]
+name = "domain_hunter"
+version = "0.1.0"
+dependencies = [
+ "colored",
+ "reqwest",
+ "trust-dns-resolver",
+ "url",
+]
+
+[[package]]
 name = "encoding_rs"
 version = "0.8.28"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -252,16 +262,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "62b467343b94ba476dcb2500d242dadbb39557df889310ac77c5d99100aaac33"
 dependencies = [
  "libc",
-]
-
-[[package]]
-name = "hidden_net"
-version = "0.1.0"
-dependencies = [
- "colored",
- "reqwest",
- "trust-dns-resolver",
- "url",
 ]
 
 [[package]]

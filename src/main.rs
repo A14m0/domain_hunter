@@ -50,7 +50,7 @@ fn search_body(body: String) -> Vec<Url> {
 fn main() {
     // define our base domain
     // TODO: Set this up to be CLI-defined
-    let base_domain = Url::parse("https://github.com").unwrap();
+    let base_domain = Url::parse("https://junkgarbage.org").unwrap();
     
     // set up our client, and make a base request to the domain
     let client = reqwest::blocking::Client::builder()
