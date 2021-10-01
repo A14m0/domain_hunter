@@ -1,5 +1,6 @@
 use reqwest;
 use url::Url;
+use clap::{Arg, App, SubCommand};
 use std::io::Read;
 
 mod log;
@@ -48,9 +49,46 @@ fn search_body(body: String) -> Vec<Url> {
 }
 
 fn main() {
+
+    let matches = App::new("Domain Hunter")
+			.version("0.1.0")
+			.about("Active OSINT tool for discovering subdomains")
+			.setting(clap::AppSettings::ArgRequiredElseHelp)
+            .arg(Arg::with_name("domain")
+                .short("d")
+                .long("domain")
+                .takes_value(true)
+                .help("The base domain to begin searching from"))
+            .arg(Arg::with_name("passive")
+                .short("p")
+                .long("passive")
+				.help("Only use passive techniques")
+			)
+			.get_matches();
+
+    // fetch our domain
+    let domain_url = match matches.value_of("domain") {
+        Some(a) => a,
+        None => {
+            log(LogType::LogCrit, format!("No domain provided through CLI"));
+            std::process::exit(1);
+        }
+    };
+
+    // see if we are doing active/passive operations
+    if matches.is_present("passive") {
+        log(LogType::LogCrit, format!("Sorry, that feature is not yet implemented!"));
+        unimplemented!();
+    }
+
     // define our base domain
-    // TODO: Set this up to be CLI-defined
-    let base_domain = Url::parse("https://junkgarbage.org").unwrap();
+    let base_domain = match Url::parse(domain_url){
+        Ok(a) => a,
+        Err(e) => {
+            log(LogType::LogCrit, format!("Failed to parse URL: {}", e));
+            std::process::exit(1);
+        }
+    };
     
     // set up our client, and make a base request to the domain
     let client = reqwest::blocking::Client::builder()
