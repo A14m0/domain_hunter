@@ -1,6 +1,6 @@
 use reqwest;
 use url::Url;
-use clap::{Arg, App, SubCommand};
+use clap::{Arg, App};
 use std::io::Read;
 
 mod log;
