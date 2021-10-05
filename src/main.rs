@@ -42,16 +42,6 @@ async fn main() {
         }
     };
 
-
-    // see if we are doing active/passive operations
-    if matches.is_present("passive") {
-        passive::passive_test().await;
-        log(LogType::LogCrit, format!("Sorry, that feature is not yet implemented!"));
-        unimplemented!();
-    }
-
-    // define our base domain
-    println!("{}", domain_url);
     let base_domain = match Url::parse(domain_url){
         Ok(a) => a,
         Err(_) => {
@@ -67,11 +57,19 @@ async fn main() {
         }
     };
 
-    // actively find the domains
-    let subdomains = active::run_active(base_domain).await;
-    println!("Subdomains found:");
-    for s in subdomains {
-        println!("{}", s.host_str().unwrap());
+    // see if we are doing active/passive operations
+    if matches.is_present("passive") {
+        log(LogType::LogWarn, format!("This feature is experimental, and most features do not work"));
+        passive::passive_test(base_domain).await;
+    } else {
+        // define our base domain
+        println!("{}", base_domain);
+    
+        // actively find the domains
+        let subdomains = active::run_active(base_domain).await;
+        println!("Subdomains found:");
+        for s in subdomains {
+            println!("{}", s.host_str().unwrap());
+        }
     }
-
 }
