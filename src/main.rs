@@ -2,6 +2,7 @@ use url::Url;
 use clap::{Arg, App};
 use tokio;
 
+
 mod log;
 mod stats;
 mod active;
@@ -40,6 +41,7 @@ async fn main() {
             std::process::exit(1);
         }
     };
+
 
     // see if we are doing active/passive operations
     if matches.is_present("passive") {

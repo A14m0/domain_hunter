@@ -1,11 +1,12 @@
 // Contains all passive gathering techniques
 use std::net::*;
-use trust_dns_resolver::Resolver;
+use trust_dns_resolver::AsyncResolver;
 use trust_dns_resolver::config::*;
 use trust_dns_proto::rr::{
     record_type::RecordType,
     RData
 };
+use trust_dns_proto::xfer::dns_request::DnsRequestOptions;
 use url::Url;
 
 use crate::active::subdomains_from_request;
@@ -16,10 +17,18 @@ use crate::log::{
 };
 
 /// fetches all of the records from a specific domain 
-fn lookup_all(domain: String, resolver: trust_dns_resolver::Resolver) -> Vec<RData>{
+async fn lookup_all(domain: String) -> Vec<RData>{
+    let resolver = AsyncResolver::tokio(
+        //ResolverConfig::cloudflare_tls(), 
+        ResolverConfig::default(),
+        ResolverOpts::default()
+    ).unwrap();
+    let opts = DnsRequestOptions{expects_multiple_responses: false, use_edns: true};
+
+
     // ANY -> Any cached records
     // fetch the any records
-    let records =  resolver.lookup(domain.clone(), RecordType::ANY).unwrap();
+    let records =  resolver.lookup(domain.clone(), RecordType::ANY, opts).await.unwrap();
     println!("{} Record(s) found", records.iter().count());
     let mut ret: Vec<trust_dns_proto::rr::RData> = Vec::new();
 
@@ -34,7 +43,7 @@ fn lookup_all(domain: String, resolver: trust_dns_resolver::Resolver) -> Vec<RDa
 
 pub async fn passive_test() {
     // Construct a new Resolver with default configuration options
-    let resolver = Resolver::new(
+    let resolver = AsyncResolver::tokio(
                             //ResolverConfig::cloudflare_tls(), 
                             ResolverConfig::default(),
                             ResolverOpts::default()
@@ -44,7 +53,7 @@ pub async fn passive_test() {
     // let mut resolver = Resolver::from_system_conf().unwrap();
 
     // Lookup the IP addresses associated with a name.
-    let response = resolver.lookup_ip("www.example.com.").unwrap();
+    let response = resolver.lookup_ip("www.example.com.").await.unwrap();
 
     // There can be many addresses associated with the name,
     //  this can return IPv4 and/or IPv6 addresses
@@ -56,7 +65,7 @@ pub async fn passive_test() {
         assert_eq!(address, IpAddr::V6(Ipv6Addr::new(0x2606, 0x2800, 0x220, 0x1, 0x248, 0x1893, 0x25c8, 0x1946)));
     }
 
-    let records = lookup_all("www.example.com".to_string(), resolver);
+    let records = lookup_all("www.example.com".to_string()).await;
 
 
 

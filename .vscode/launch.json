@@ -1,0 +1,49 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug executable 'domain_hunter'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=domain_hunter",
+                    "--package=domain_hunter",
+                ],
+                "filter": {
+                    "name": "domain_hunter",
+                    "kind": "bin"
+                }
+            },
+            "args": [
+                "-p",
+                "-d",
+                "https://google.com"
+            ],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in executable 'domain_hunter'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--bin=domain_hunter",
+                    "--package=domain_hunter"
+                ],
+                "filter": {
+                    "name": "domain_hunter",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        }
+    ]
+}
