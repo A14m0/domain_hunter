@@ -141,23 +141,14 @@ fn search_body(body: String) -> Vec<Url> {
     ret
 }
 
-/// Searches the domain for subdomains
-pub async fn subdomains(
-    url: Url, 
-    client: reqwest::Client,
+/// searches response for subdomains
+pub async fn subdomains_from_request(
+    url: Url,
+    res: reqwest::Response,
     stats: &mut Stats
 ) -> Vec<Url> {
-    //println!("URL={}, Depth={}", url, depth);
     let mut ret = Vec::new();
 
-
-    let res = match client.get(url.clone()).send().await {
-        Ok(a) => a,
-        Err(e) => {
-            log(LogType::LogCrit, format!("Failed to find domain: {}", e));
-            std::process::exit(1);
-        }
-    };
     let body = match res.text().await {
         Ok(a) => a,
         Err(e) => {
@@ -208,7 +199,26 @@ pub async fn subdomains(
     //    ret.append(&mut out);
     }
 
+
     clear_dupes(ret)
+}
+
+/// Searches the domain for subdomains
+pub async fn subdomains(
+    url: Url, 
+    client: reqwest::Client,
+    stats: &mut Stats
+) -> Vec<Url> {
+    //println!("URL={}, Depth={}", url, depth);
+    let res = match client.get(url.clone()).send().await {
+        Ok(a) => a,
+        Err(e) => {
+            log(LogType::LogCrit, format!("Failed to find domain: {}", e));
+            std::process::exit(1);
+        }
+    };
+
+    subdomains_from_request(url, res, stats).await
 }
 
 

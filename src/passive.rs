@@ -8,6 +8,13 @@ use trust_dns_proto::rr::{
 };
 use url::Url;
 
+use crate::active::subdomains_from_request;
+use crate::stats::Stats;
+use crate::log::{
+    log,
+    LogType
+};
+
 /// fetches all of the records from a specific domain 
 fn lookup_all(domain: String, resolver: trust_dns_resolver::Resolver) -> Vec<RData>{
     // ANY -> Any cached records
@@ -25,7 +32,7 @@ fn lookup_all(domain: String, resolver: trust_dns_resolver::Resolver) -> Vec<RDa
     ret
 }
 
-pub fn passive_test() {
+pub async fn passive_test() {
     // Construct a new Resolver with default configuration options
     let resolver = Resolver::new(
                             //ResolverConfig::cloudflare_tls(), 
@@ -57,7 +64,28 @@ pub fn passive_test() {
 
 
 
-/// tries to find domains through DuckDuck-dorking :)
-fn dork_domains(domain: String) -> Vec<Url> {
-    Vec::new()
+/// tries to find domains through DuckDuck-dorking 
+async fn dork_domains(domain: Url) -> Vec<Url> {
+    let client = reqwest::Client::builder()
+        .user_agent("Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:92.0) Gecko/20100101 Firefox/92.0")
+        .build().unwrap();
+    let mut stats = Stats{urls:0};
+    
+    // create our request call
+    let call = format!(
+        "https://duckduckgo.com/?q=site%3A*+{}",
+        domain.host_str().unwrap()
+    );
+
+    // make the call
+    let res = match client.get(call).send().await {
+        Ok(a) => a,
+        Err(e) => {
+            log(LogType::LogCrit, format!("Failed to find domain: {}", e));
+            std::process::exit(1);
+        }
+    };
+   
+
+    subdomains_from_request(domain, res,&mut stats).await
 }

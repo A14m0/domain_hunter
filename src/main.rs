@@ -43,7 +43,7 @@ async fn main() {
 
     // see if we are doing active/passive operations
     if matches.is_present("passive") {
-        passive::passive_test();
+        passive::passive_test().await;
         log(LogType::LogCrit, format!("Sorry, that feature is not yet implemented!"));
         unimplemented!();
     }
