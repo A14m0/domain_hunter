@@ -10,7 +10,7 @@ use crate::log::{
 };
 
 /// defines the maximum recursion depth for looking for domains
-const MAX_DEPTH: u16 = 1;
+const MAX_DEPTH: u16 = 2;
 
 /// helper function that adds `https://` to the front of a URL
 fn https(url: String) -> String {
@@ -143,46 +143,24 @@ fn search_body(body: String) -> Vec<Url> {
 }
 
 /// Searches the domain for subdomains
-pub fn subdomains(
+pub async fn subdomains(
     url: Url, 
-    depth: u16, 
-    client: Option<reqwest::blocking::Client>,
-    stats: Option<&mut Stats>
+    client: reqwest::Client,
+    stats: &mut Stats
 ) -> Vec<Url> {
     //println!("URL={}, Depth={}", url, depth);
-    // see if we are at the max depth to stop looking for crap
-    if depth > MAX_DEPTH {
-        return Vec::new();
-    }
     let mut ret = Vec::new();
 
-    // set up our client, and make a base request to the domain
-    let r: reqwest::blocking::Client;
-    if let Some(x) = client {
-        r = x;
-    } else {
-        r = reqwest::blocking::Client::builder()
-            .user_agent("Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:92.0) Gecko/20100101 Firefox/92.0")
-            .build().unwrap();
-    }
-    let mut s: Stats;
-    if let Some(x) = stats {
-        s = *x;
-    } else {
-        s = Stats {urls: 0};
-    }
 
-
-    let mut res = match r.get(url.clone()).send() {
+    let res = match client.get(url.clone()).send().await {
         Ok(a) => a,
         Err(e) => {
             log(LogType::LogCrit, format!("Failed to find domain: {}", e));
             std::process::exit(1);
         }
     };
-    let mut body = String::new();
-    match res.read_to_string(&mut body) {
-        Ok(_) => (),
+    let body = match res.text().await {
+        Ok(a) => a,
         Err(e) => {
             log(
                 LogType::LogErr, 
@@ -204,14 +182,13 @@ pub fn subdomains(
     let t = search_body(body);
     for _ in t.clone() {
         //println!("{}",s);
-        s.urls += 1;
+        stats.urls += 1;
     }
     log(
         LogType::LogInfo,
         format!(
-            "Processed {} URLs (Depth {}) {}",
-            s.urls,
-            depth,
+            "Processed {} URLs {}",
+            stats.urls,
             url
         )
     );
@@ -224,13 +201,54 @@ pub fn subdomains(
     );*/
     for sub in find_subdomains(url, t) {
         ret.push(sub.clone());
-        let mut out = subdomains(sub, 
-            depth + 1, 
-            Some(r.clone()),
-            Some(&mut s)
-        );
-        ret.append(&mut out);
+    //    let mut out = subdomains(sub, 
+    //        depth + 1, 
+    //        Some(r.clone()),
+    //        Some(&mut s)
+    //    ).await;
+    //    ret.append(&mut out);
     }
 
+    clear_dupes(ret)
+}
+
+
+/// runs all active search methods
+pub async fn run_active(url: Url) -> Vec<Url> {
+    log(
+        LogType::LogInfo,
+        format!("Running with MAX_DEPTH={}", MAX_DEPTH)
+    );
+
+    // define our variables
+    let client = reqwest::Client::builder()
+        .user_agent("Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:92.0) Gecko/20100101 Firefox/92.0")
+        .build().unwrap();
+    let mut stats = Stats{urls: 0};
+    let mut ret: Vec<Url> = Vec::new();
+    let mut current = subdomains(url, client.clone(), &mut stats).await;
+    let mut temp: Vec<Url> = Vec::new();
+    ret.append(&mut current.clone());
+    
+    // loop over each level down to `depth`
+    for _level in 1..MAX_DEPTH {
+        // loop for each subdomain found at the depth 
+        // and add it to a temporary vector
+        for domain in current.iter() {
+            temp.append(
+                &mut subdomains(
+                    domain.clone(), 
+                    client.clone(), 
+                    &mut stats
+                ).await
+            );
+        }
+        // save the found domains, swap the vectors, and go again
+        ret.append(&mut temp);
+        current = temp.clone();
+        temp = Vec::new();
+    }
+
+    // now remove duplicates and return it
     clear_dupes(ret)
 }

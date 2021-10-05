@@ -1,5 +1,6 @@
 use url::Url;
 use clap::{Arg, App};
+use tokio;
 
 mod log;
 mod stats;
@@ -13,7 +14,8 @@ use crate::log::{
 
 
 
-fn main() {
+#[tokio::main]
+async fn main() {
     let matches = App::new("Domain Hunter")
 			.version("0.1.0")
 			.about("Active OSINT tool for discovering subdomains")
@@ -63,7 +65,7 @@ fn main() {
         }
     };
 
-    let subdomains = active::subdomains(base_domain, 0, None, None);
+    let subdomains = active::run_active(base_domain).await;
     println!("Subdomains found: ");
     for s in subdomains {
         println!("{}", s.host_str().unwrap());
