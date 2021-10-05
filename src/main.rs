@@ -65,8 +65,9 @@ async fn main() {
         }
     };
 
+    // actively find the domains
     let subdomains = active::run_active(base_domain).await;
-    println!("Subdomains found: ");
+    println!("Subdomains found:");
     for s in subdomains {
         println!("{}", s.host_str().unwrap());
     }

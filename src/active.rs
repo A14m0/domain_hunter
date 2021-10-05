@@ -1,7 +1,6 @@
 // Contains all active gathering techniques
 use reqwest;
 use url::Url;
-use std::io::Read;
 
 use crate::stats::Stats;
 use crate::log::{
