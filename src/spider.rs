@@ -91,6 +91,8 @@ pub async fn spider(start: Url) -> Vec<Url> {
             };
             tmp.append(&mut check_for_links(link.clone(), res.text().await.unwrap()));
         }
+
+        log(LogType::LogInfo, format!("Found {} URLs", tmp.len()));
         
         // add the new ones, swap vectors, and continue
         ret.append(&mut clear_dup_url(tmp.clone()));
