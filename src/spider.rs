@@ -104,7 +104,7 @@ pub async fn spider(start: Url) -> Vec<Url> {
     // Done. print all the URLs we found
     log(
         LogType::LogInfo,
-        format!("Found {} URLs:", ret.len())
+        format!("Complete -- Found {} URLs --", ret.len())
     );
     
     for v in ret.iter() {
