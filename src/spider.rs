@@ -45,7 +45,9 @@ fn check_for_links(domain: Url, body: String) -> Vec<Url> {
     let body = body.split("<");
     // loop over each entry in the body
     for line in body {
+        // check if the line contains a URL-looking thing
         if re.is_match(line) {
+            // extract and append
             match extract_link(line, domain.clone()) {
                 Ok(a) => ret.push(a),
                 Err(_) => ()
@@ -53,6 +55,7 @@ fn check_for_links(domain: Url, body: String) -> Vec<Url> {
         }
     }
     
+    // remove all dupes before moving on
     clear_dup_url(ret)
 }
 
@@ -64,6 +67,7 @@ pub async fn spider(start: Url) -> Vec<Url> {
     let mut ret: Vec<Url> = Vec::new();
     let mut tmp: Vec<Url> = Vec::new();
 
+    // get our initial url list
     let res = match client.get(start.clone()).send().await {
         Ok(a) => a,
         Err(e) => {
@@ -71,16 +75,13 @@ pub async fn spider(start: Url) -> Vec<Url> {
             std::process::exit(1);
         }
     };
-
     let mut current = check_for_links(start.clone(), res.text().await.unwrap());
-    for v in current.iter() {
-        println!("{}", v);
-    }
-
+    
     log(LogType::LogInfo, format!("Running spider with MAX_DEPTH={}...", MAX_DEPTH));
-    for i in 0..MAX_DEPTH {
-        println!("{}", i);
+    // go to MAX_DEPTH
+    for _ in 0..MAX_DEPTH {
         for link in current.iter() {
+            // get each link, appending the ones we found
             let res = match client.get(link.clone()).send().await {
                 Ok(a) => a,
                 Err(e) => {
@@ -91,12 +92,14 @@ pub async fn spider(start: Url) -> Vec<Url> {
             tmp.append(&mut check_for_links(link.clone(), res.text().await.unwrap()));
         }
         
+        // add the new ones, swap vectors, and continue
         ret.append(&mut clear_dup_url(tmp.clone()));
         current = clear_dup_url(tmp.clone());
         tmp.clear();
 
     }
 
+    // Done. print all the URLs we found
     log(
         LogType::LogInfo,
         format!("Found {} URLs:", ret.len())
