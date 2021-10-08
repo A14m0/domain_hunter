@@ -76,7 +76,8 @@ pub async fn spider(start: Url) -> Vec<Url> {
         }
     };
     let mut current = check_for_links(start.clone(), res.text().await.unwrap());
-    
+    ret.append(&mut current.clone());
+
     log(LogType::LogInfo, format!("Running spider with MAX_DEPTH={}...", MAX_DEPTH));
     // go to MAX_DEPTH
     for _ in 0..MAX_DEPTH {
