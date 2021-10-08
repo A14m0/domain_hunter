@@ -67,6 +67,11 @@ pub async fn spider(start: Url) -> Vec<Url> {
     let mut ret: Vec<Url> = Vec::new();
     let mut tmp: Vec<Url> = Vec::new();
 
+    log(
+        LogType::LogInfo,
+        format!("Fetching initial URL set from site...")
+    );
+
     // get our initial url list
     let res = match client.get(start.clone()).send().await {
         Ok(a) => a,
