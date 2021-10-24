@@ -35,7 +35,15 @@ async fn lookup_all(domain: String) -> Vec<RData>{
     // print each record and its type
     for record in records {
         ret.push(record.clone());
-        println!("{} ({}): {}", domain, record.to_record_type(),record);
+        match record.to_record_type() {
+            RecordType::CAA => {
+                println!("{} (CAA) ", domain);
+            },
+            _ => {
+                println!("{} ({}): {}", domain, record.to_record_type(), record);
+            }
+        }
+        
     }
 
     ret
